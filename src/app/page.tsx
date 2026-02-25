@@ -1,65 +1,129 @@
-import Image from "next/image";
+import Link from 'next/link';
+import { ArrowRight, Sparkles, BarChart3, FileText, Zap } from 'lucide-react';
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      {/* Header */}
+      <header className="border-b border-slate-200 bg-white/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <nav className="flex justify-between items-center">
+            <div className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              SEO CMS
+            </div>
+            <div className="flex gap-3">
+              <Link 
+                href="/login" 
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                Log in
+              </Link>
+              <Link 
+                href="/register" 
+                className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md shadow-indigo-500/25"
+              >
+                Get Started
+              </Link>
+            </div>
+          </nav>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      {/* Hero Section */}
+      <section className="container mx-auto px-4 py-20 text-center">
+        <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full text-sm font-medium mb-8">
+          <Sparkles className="w-4 h-4" />
+          <span>AI-Powered SEO Optimization</span>
         </div>
-      </main>
+        
+        <h1 className="text-5xl md:text-6xl font-bold mb-6">
+          <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            Enterprise SEO CMS
+          </span>
+        </h1>
+        
+        <p className="text-xl text-slate-600 mb-12 max-w-2xl mx-auto">
+          Create, optimize, and manage content with AI-powered SEO recommendations. 
+          Built for scale, designed for performance.
+        </p>
+        
+        <div className="flex gap-4 justify-center">
+          <Link
+            href="/register"
+            className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-indigo-500/25 font-medium inline-flex items-center gap-2"
+          >
+            Start Creating <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href="/login"
+            className="px-8 py-3 bg-white text-slate-700 rounded-xl hover:bg-slate-50 transition-all border border-slate-200 font-medium"
+          >
+            Sign In
+          </Link>
+        </div>
+
+        {/* Quick Dev Login - Hidden on production */}
+        <div className="mt-8 pt-8 border-t border-slate-200">
+          <p className="text-sm text-slate-500 mb-3">Development Access</p>
+          <div className="flex gap-3 justify-center">
+            <Link
+              href="/login"
+              className="text-xs px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
+            >
+              Login Page
+            </Link>
+            <Link
+              href="/register"
+              className="text-xs px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
+            >
+              Register Page
+            </Link>
+            <Link
+              href="/dashboard"
+              className="text-xs px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
+            >
+              Dashboard (Protected)
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-4">
+              <FileText className="w-6 h-6 text-indigo-600" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Rich Content Editor</h3>
+            <p className="text-slate-600">Create and edit content with real-time SEO analysis</p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+              <BarChart3 className="w-6 h-6 text-purple-600" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">SEO Analytics</h3>
+            <p className="text-slate-600">Track performance and get AI-powered recommendations</p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center mb-4">
+              <Zap className="w-6 h-6 text-pink-600" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">AI Automation</h3>
+            <p className="text-slate-600">Generate meta descriptions and optimize content automatically</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-200 py-8">
+        <div className="container mx-auto px-4 text-center text-sm text-slate-600">
+          <p>© 2024 SEO CMS. Enterprise-grade content management system.</p>
+          <p className="text-xs text-slate-400 mt-2">Development Mode - Authentication Ready</p>
+        </div>
+      </footer>
     </div>
   );
 }
