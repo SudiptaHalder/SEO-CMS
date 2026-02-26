@@ -2,8 +2,10 @@
 
 import { prisma } from '@/lib/db/prisma';
 import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { SEOAnalyzer } from '@/lib/seo/analyzer';
 
 const postSchema = z.object({
   title: z.string().min(5).max(100),
@@ -15,48 +17,23 @@ const postSchema = z.object({
   focusKeyword: z.string().optional().nullable(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'SCHEDULED']).default('DRAFT'),
   categoryId: z.string().optional().nullable(),
-  tags: z.union([z.array(z.string()), z.string()]).optional().nullable(), // Accept either array or string
+  tags: z.string().optional().nullable(),
   featuredImage: z.string().optional().nullable(),
   scheduledFor: z.string().optional().nullable(),
 });
 
 export async function createPost(formData: FormData) {
   console.log('🚀 CREATE POST ACTION STARTED');
-  console.log('📦 Form Data received:');
   
-  // Log all form data
-  const formDataObj: Record<string, any> = {};
-  for (const [key, value] of formData.entries()) {
-    formDataObj[key] = value;
-    console.log(`   ${key}: ${value}`);
-  }
-
   try {
     // Check session
-    console.log('🔐 Checking session...');
-    const session = await getServerSession();
-    console.log('👤 Session user:', session?.user);
-
+    const session = await getServerSession(authOptions);
+    
     if (!session?.user?.id) {
-      console.log('❌ No user ID in session');
       return { error: 'You must be logged in' };
     }
 
     // Parse form data
-    let tagsValue = formData.get('tags') as string | null;
-    
-    // Handle tags - convert string to array if needed
-    let parsedTags = null;
-    if (tagsValue) {
-      try {
-        // Try to parse as JSON first
-        parsedTags = JSON.parse(tagsValue);
-      } catch {
-        // If not JSON, split by comma
-        parsedTags = tagsValue.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
-      }
-    }
-
     const data = {
       title: formData.get('title') as string,
       slug: formData.get('slug') as string,
@@ -67,31 +44,24 @@ export async function createPost(formData: FormData) {
       focusKeyword: formData.get('focusKeyword') as string || null,
       status: (formData.get('status') as 'DRAFT' | 'PUBLISHED' | 'SCHEDULED') || 'DRAFT',
       categoryId: formData.get('categoryId') as string || null,
-      tags: parsedTags,
+      tags: formData.get('tags') as string || null,
       featuredImage: formData.get('featuredImage') as string || null,
       scheduledFor: formData.get('scheduledFor') as string || null,
     };
 
-    console.log('📝 Parsed data:', data);
-
     // Validate
-    console.log('✅ Validating...');
     const validated = postSchema.parse(data);
-    console.log('✅ Validation passed');
 
     // Check if slug exists
-    console.log(`🔍 Checking slug: ${validated.slug}`);
     const existingPost = await prisma.post.findUnique({
       where: { slug: validated.slug }
     });
 
     if (existingPost) {
-      console.log('❌ Slug already exists');
       return { error: 'Slug already exists' };
     }
 
     // Create post
-    console.log('📝 Creating post in database...');
     const post = await prisma.post.create({
       data: {
         title: validated.title,
@@ -108,14 +78,6 @@ export async function createPost(formData: FormData) {
             connect: { id: validated.categoryId }
           }
         }),
-        ...(validated.tags && {
-          tags: {
-            connectOrCreate: (validated.tags as string[]).map(tagName => ({
-              where: { name: tagName },
-              create: { name: tagName, slug: tagName.toLowerCase().replace(/\s+/g, '-') }
-            }))
-          }
-        }),
         ...(validated.scheduledFor && {
           scheduledFor: new Date(validated.scheduledFor)
         }),
@@ -125,14 +87,46 @@ export async function createPost(formData: FormData) {
       }
     });
 
-    console.log('✅ Post created!', { id: post.id, title: post.title });
+    // 🔥 ADD SEO ANALYSIS HERE - AFTER POST CREATION
+    console.log('🔍 Running SEO analysis for new post:', post.id);
+    
+    const analyzer = new SEOAnalyzer();
+    const analysis = await analyzer.analyze(
+      validated.content,
+      validated.title,
+      validated.metaDescription || '',
+      validated.focusKeyword || '',
+      validated.slug
+    );
+
+    // Create SEO report
+    await prisma.seoReport.create({
+      data: {
+        postId: post.id,
+        score: analysis.score,
+        titleScore: analysis.titleScore,
+        descriptionScore: analysis.descriptionScore,
+        keywordDensity: analysis.keywordDensity,
+        headingScore: analysis.headingScore,
+        internalLinks: analysis.internalLinks,
+        externalLinks: analysis.externalLinks,
+        readabilityScore: analysis.readabilityScore,
+        imageAltScore: analysis.imageAltScore,
+        slugScore: analysis.slugScore,
+        keywordPresence: analysis.keywordPresence,
+        suggestions: analysis.suggestions,
+        analyzedAt: new Date()
+      }
+    });
+
+    console.log('✅ SEO analysis complete for post:', post.id, 'Score:', analysis.score);
+
     revalidatePath('/dashboard/posts');
     
     return { success: true, postId: post.id };
   } catch (error) {
     console.error('❌ Error:', error);
     if (error instanceof z.ZodError) {
-      console.error('Zod validation errors:', error.errors);
       return { error: error.errors[0].message };
     }
     return { error: error instanceof Error ? error.message : 'Unknown error' };

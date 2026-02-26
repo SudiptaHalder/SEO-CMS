@@ -2,7 +2,9 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import Link from "next/link";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search, Filter, ExternalLink, Edit } from "lucide-react";
+import PostActions from "@/components/posts/PostActions";
+import SimpleImage from "@/components/ui/SimpleImage";
 
 export default async function PostsPage() {
   const session = await getServerSession();
@@ -39,7 +41,6 @@ export default async function PostsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Posts</h1>
@@ -54,7 +55,6 @@ export default async function PostsPage() {
         </Link>
       </div>
 
-      {/* Search and Filter Bar */}
       <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-emerald-100 shadow-sm">
         <div className="flex-1 relative">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -70,65 +70,123 @@ export default async function PostsPage() {
         </button>
       </div>
 
-      {/* Posts Table */}
       <div className="bg-white rounded-xl shadow-sm border border-emerald-100 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-100">
-            <tr>
-              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SEO Score</th>
-              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {posts.map((post) => (
-              <tr key={post.id} className="hover:bg-gray-50/50 transition-colors">
-                <td className="px-5 py-3">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{post.title}</p>
-                    <p className="text-xs text-gray-500">{post.slug}</p>
-                  </div>
-                </td>
-                <td className="px-5 py-3">
-                  <span className={`text-xs px-2 py-1 rounded-full border ${getStatusBadge(post.status)}`}>
-                    {post.status}
-                  </span>
-                </td>
-                <td className="px-5 py-3">
-                  {post.seoReport ? (
-                    <span className={`text-xs px-2 py-1 rounded-full border ${getScoreColor(post.seoReport.score)}`}>
-                      {post.seoReport.score}%
-                    </span>
-                  ) : (
-                    <span className="text-xs px-2 py-1 text-gray-500 bg-gray-100 rounded-full border border-gray-200">
-                      Not analyzed
-                    </span>
-                  )}
-                </td>
-                <td className="px-5 py-3 text-xs text-gray-600">
-                  {new Date(post.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-5 py-3">
-                  <Link
-                    href={`/dashboard/posts/${post.id}/edit`}
-                    className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
-                  >
-                    Edit
-                  </Link>
-                </td>
-              </tr>
-            ))}
-            {posts.length === 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <td colSpan={5} className="px-5 py-8 text-center text-sm text-gray-500">
-                  No posts yet. Create your first post!
-                </td>
+                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title & Image</th>
+                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">SEO Score</th>
+                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {posts.map((post) => (
+                <tr key={post.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                        {post.featuredImage ? (
+                          <SimpleImage
+                            src={post.featuredImage}
+                            alt={post.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-emerald-100 flex items-center justify-center">
+                            <span className="text-emerald-600 font-medium text-sm">
+                              {post.title.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <Link 
+                          href={`/dashboard/posts/${post.id}/edit`}
+                          className="text-sm font-medium text-gray-900 hover:text-emerald-600 transition-colors"
+                        >
+                          {post.title}
+                        </Link>
+                        <p className="text-xs text-gray-500">{post.slug}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3">
+                    <span className={`text-xs px-2 py-1 rounded-full border ${getStatusBadge(post.status)}`}>
+                      {post.status}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    {post.seoReport ? (
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs px-2 py-1 rounded-full border ${getScoreColor(post.seoReport.score)}`}>
+                          {post.seoReport.score}%
+                        </span>
+                        <div className="w-16 h-1.5 bg-gray-100 rounded-full">
+                          <div 
+                            className={`h-full rounded-full ${
+                              post.seoReport.score >= 80 ? 'bg-emerald-500' :
+                              post.seoReport.score >= 60 ? 'bg-yellow-500' :
+                              'bg-red-500'
+                            }`}
+                            style={{ width: `${post.seoReport.score}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-xs px-2 py-1 text-gray-500 bg-gray-100 rounded-full border border-gray-200">
+                        Not analyzed
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3 text-xs text-gray-600">
+                    {new Date(post.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-1">
+                      <Link
+                        href={`/posts/${post.slug}`}
+                        target="_blank"
+                        className="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                        title="View Post"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </Link>
+                      <Link
+                        href={`/dashboard/posts/${post.id}/edit`}
+                        className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit Post"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Link>
+                      <PostActions postId={post.id} />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {posts.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-5 py-8 text-center text-sm text-gray-500">
+                    <p className="mb-3">No posts yet</p>
+                    <Link
+                      href="/dashboard/posts/new"
+                      className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Create your first post
+                    </Link>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

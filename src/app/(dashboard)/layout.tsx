@@ -1,7 +1,9 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
-import DeepGreenSidebar from "@/components/dashboard/DeepGreenSidebar";
+import { SidebarProvider } from "@/components/dashboard/Sidebar";
+import Sidebar from "@/components/dashboard/Sidebar";
+import MainContent from "./MainContent";
 
 export default async function DashboardLayout({
   children,
@@ -15,13 +17,11 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
-      <DeepGreenSidebar user={session.user} />
-      <main className="lg:ml-[220px] transition-all duration-300">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-          {children}
-        </div>
-      </main>
-    </div>
+    <SidebarProvider>
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
+        <Sidebar user={session.user} />
+        <MainContent>{children}</MainContent>
+      </div>
+    </SidebarProvider>
   );
 }

@@ -11,7 +11,6 @@ import CharacterCount from '@tiptap/extension-character-count';
 import {
   Bold,
   Italic,
-  Underline,
   List,
   ListOrdered,
   Heading1,
@@ -24,6 +23,7 @@ import {
   Code,
   Undo,
   Redo,
+  Loader2,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
@@ -35,6 +35,7 @@ interface RichTextEditorProps {
 
 export default function RichTextEditor({ content, onChange, onWordCountChange }: RichTextEditorProps) {
   const [wordCount, setWordCount] = useState(0);
+  const [uploading, setUploading] = useState(false);
 
   const editor = useEditor({
     extensions: [
@@ -48,7 +49,11 @@ export default function RichTextEditor({ content, onChange, onWordCountChange }:
           class: 'text-emerald-600 underline underline-offset-2 hover:text-emerald-700',
         },
       }),
-      Image,
+      Image.configure({
+        HTMLAttributes: {
+          class: 'rounded-lg max-w-full h-auto my-4',
+        },
+      }),
       TaskList,
       TaskItem.configure({
         nested: true,
@@ -99,6 +104,50 @@ export default function RichTextEditor({ content, onChange, onWordCountChange }:
       editor.chain().focus().setImage({ src: url }).run();
     }
   }, [editor]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editor) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be less than 5MB');
+      return;
+    }
+
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      
+      // Insert image at cursor position
+      editor.chain().focus().setImage({ src: data.url }).run();
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload image');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
 
   if (!editor) {
     return null;
@@ -198,13 +247,31 @@ export default function RichTextEditor({ content, onChange, onWordCountChange }:
         >
           <LinkIcon className="w-4 h-4" />
         </button>
-        <button
-          onClick={addImage}
-          className="p-2 rounded hover:bg-gray-200 transition-colors"
-          title="Add Image"
-        >
-          <ImageIcon className="w-4 h-4" />
-        </button>
+        
+        {/* Image Upload Button */}
+        <div className="relative">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+            disabled={uploading}
+          />
+          <button
+            className={`p-2 rounded hover:bg-gray-200 transition-colors ${
+              uploading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            title="Upload Image"
+            disabled={uploading}
+          >
+            {uploading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ImageIcon className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+        
         <button
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           className={`p-2 rounded hover:bg-gray-200 transition-colors ${
@@ -246,8 +313,13 @@ export default function RichTextEditor({ content, onChange, onWordCountChange }:
       <EditorContent editor={editor} />
       
       {/* Word Count */}
-      <div className="border-t border-gray-200 px-4 py-2 text-xs text-gray-500 flex justify-end">
-        {wordCount} words · ~{Math.ceil(wordCount / 200)} min read
+      <div className="border-t border-gray-200 px-4 py-2 text-xs text-gray-500 flex justify-between items-center">
+        <span>
+          {uploading ? 'Uploading image...' : `${wordCount} words · ~${Math.ceil(wordCount / 200)} min read`}
+        </span>
+        <span className="text-emerald-600">
+          Tip: You can also drag & drop images directly into the editor
+        </span>
       </div>
     </div>
   );
